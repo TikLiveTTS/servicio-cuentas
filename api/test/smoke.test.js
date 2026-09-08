@@ -9,8 +9,6 @@ const assert = require('node:assert');
 // Env minimo para que config.js no haga process.exit(1).
 process.env.POSTGRES_URL = process.env.POSTGRES_URL || 'postgresql://u:p@localhost:5432/x';
 process.env.SESSION_SECRET = process.env.SESSION_SECRET || 'x'.repeat(32);
-process.env.POLAR_API_KEY = process.env.POLAR_API_KEY || 'polar_pat_test';
-process.env.POLAR_WEBHOOK_SECRET = process.env.POLAR_WEBHOOK_SECRET || 'polar_whs_test';
 
 test('config carga con env minimo', () => {
   const config = require('../src/config');
@@ -40,7 +38,7 @@ test('hash y verificacion de password', async () => {
   assert.ok(!(await verificarPassword('otra', h)));
 });
 
-test('verificar-firma se inicializa (secreto base64)', () => {
+test('verificar-firma lanza claro si Polar no esta configurado', () => {
   const { verificarFirma } = require('../src/polar/verificar-firma');
-  assert.equal(typeof verificarFirma, 'function');
+  assert.throws(() => verificarFirma('{}', {}), /POLAR_WEBHOOK_SECRET/);
 });

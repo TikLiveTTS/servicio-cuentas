@@ -8,8 +8,9 @@ services:
       POSTGRES_URL: ${POSTGRES_URL:?falta POSTGRES_URL}
       DB_SCHEMA: ${DB_SCHEMA:-cuentas}
       SESSION_SECRET: ${SESSION_SECRET:?falta SESSION_SECRET}
-      POLAR_API_KEY: ${POLAR_API_KEY:?falta POLAR_API_KEY}
-      POLAR_WEBHOOK_SECRET: ${POLAR_WEBHOOK_SECRET:?falta POLAR_WEBHOOK_SECRET}
+      # Polar: opcionales hasta la Fase 2 (checkout/webhooks).
+      POLAR_API_KEY: ${POLAR_API_KEY:-}
+      POLAR_WEBHOOK_SECRET: ${POLAR_WEBHOOK_SECRET:-}
       POLAR_PRODUCT_ID_PRO_ANUAL: ${POLAR_PRODUCT_ID_PRO_ANUAL:-}
       POLAR_ENV: ${POLAR_ENV:-test}
       # Opcionales.

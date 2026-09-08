@@ -36,8 +36,10 @@ const config = {
   sessionSecret: required('SESSION_SECRET'),
   sessionHours: int('SESSION_HOURS', 720),
 
-  polarApiKey: required('POLAR_API_KEY'),
-  polarWebhookSecret: required('POLAR_WEBHOOK_SECRET'),
+  // Polar: opcionales para arrancar. La Fase 1 (auth) no los necesita; las
+  // rutas de checkout/webhook fallan explícitas si faltan cuando se las usa.
+  polarApiKey: opt('POLAR_API_KEY', ''),
+  polarWebhookSecret: opt('POLAR_WEBHOOK_SECRET', ''),
   polarProductIdProAnual: opt('POLAR_PRODUCT_ID_PRO_ANUAL', ''),
   polarEnv: opt('POLAR_ENV', 'test'),
 

@@ -8,8 +8,19 @@
 const { Webhook } = require('standardwebhooks');
 const config = require('../config');
 
-const secretB64 = Buffer.from(config.polarWebhookSecret.trim(), 'utf-8').toString('base64');
-const wh = new Webhook(secretB64);
+let wh = null;
+function getWebhook() {
+  if (!config.polarWebhookSecret) {
+    const e = new Error('POLAR_WEBHOOK_SECRET no configurado');
+    e.code = 'polar_no_configurado';
+    throw e;
+  }
+  if (!wh) {
+    const secretB64 = Buffer.from(config.polarWebhookSecret.trim(), 'utf-8').toString('base64');
+    wh = new Webhook(secretB64);
+  }
+  return wh;
+}
 
 // Devuelve el payload verificado (objeto) o lanza si la firma no valida.
 function verificarFirma(rawBody, headers) {
@@ -18,7 +29,7 @@ function verificarFirma(rawBody, headers) {
   for (const [k, v] of Object.entries(headers || {})) {
     hdrs[k] = Array.isArray(v) ? v[0] : v;
   }
-  return wh.verify(body, hdrs);
+  return getWebhook().verify(body, hdrs);
 }
 
 module.exports = { verificarFirma };
