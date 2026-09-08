@@ -1,0 +1,31 @@
+services:
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    environment:
+      # Obligatorias — cargar en el panel de Coolify (Environment variables).
+      POSTGRES_URL: ${POSTGRES_URL:?falta POSTGRES_URL}
+      DB_SCHEMA: ${DB_SCHEMA:-cuentas}
+      SESSION_SECRET: ${SESSION_SECRET:?falta SESSION_SECRET}
+      POLAR_API_KEY: ${POLAR_API_KEY:?falta POLAR_API_KEY}
+      POLAR_WEBHOOK_SECRET: ${POLAR_WEBHOOK_SECRET:?falta POLAR_WEBHOOK_SECRET}
+      POLAR_PRODUCT_ID_PRO_ANUAL: ${POLAR_PRODUCT_ID_PRO_ANUAL:-}
+      POLAR_ENV: ${POLAR_ENV:-test}
+      # Opcionales.
+      PORT: 4000
+      SESSION_HOURS: ${SESSION_HOURS:-720}
+      TRUST_PROXY: ${TRUST_PROXY:-true}
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-*}
+      RECONCILE_EVERY_HOURS: ${RECONCILE_EVERY_HOURS:-6}
+      PUBLIC_URL: ${PUBLIC_URL:-https://cuentas.tiklivetts.es}
+    expose:
+      - "4000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+# El dominio (cuentas.tiklivetts.es) y el TLS los maneja el proxy de Coolify:
+# setear el FQDN del recurso en el panel apuntando al puerto 4000.
