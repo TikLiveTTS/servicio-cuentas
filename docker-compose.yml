@@ -4,7 +4,10 @@ services:
       context: ./api
       dockerfile: Dockerfile
     environment:
-      # Obligatorias — cargar en el panel de Coolify (Environment variables).
+      # POSTGRES_URL apunta al Postgres de la Supabase self-hosted.
+      #   postgresql://postgres:<POSTGRES_PASSWORD>@supabase-db:5432/postgres
+      # Para que 'supabase-db' resuelva: activar "Connect To Predefined Network"
+      # en ESTE recurso Y en el servicio Supabase (ambos en la red 'coolify').
       POSTGRES_URL: ${POSTGRES_URL:?falta POSTGRES_URL}
       DB_SCHEMA: ${DB_SCHEMA:-cuentas}
       SESSION_SECRET: ${SESSION_SECRET:?falta SESSION_SECRET}
@@ -28,5 +31,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-# El dominio (cuentas.tiklivetts.es) y el TLS los maneja el proxy de Coolify:
-# setear el FQDN del recurso en el panel apuntando al puerto 4000.
+
+# El dominio (cuentas.tiklivetts.es) y el TLS los maneja Traefik (proxy de
+# Coolify): setear el FQDN del recurso en el panel apuntando al puerto 4000.

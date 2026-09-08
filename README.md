@@ -33,7 +33,21 @@ node src/index.js
 
 ## Despliegue (Coolify)
 
-Build pack `dockercompose` sobre `docker-compose.yml`. Variables de entorno
-obligatorias en el panel de Coolify (ver `.env.example`). El contenedor `api`
-corre `db/migrate.js` antes de escuchar en el puerto: las tablas se crean solas
-en el primer arranque.
+Build pack `dockercompose` sobre `docker-compose.yml`. El contenedor `api` corre
+`db/migrate.js` antes de escuchar: las tablas se crean solas en el primer
+arranque, en el schema `DB_SCHEMA` (default `cuentas`).
+
+1. **Recurso nuevo** → Docker Compose, repo `TikLiveTTS/servicio-cuentas`, branch
+   `main`, compose `/docker-compose.yml`.
+2. **Environment variables**:
+   - `POSTGRES_URL` = `postgresql://postgres:<POSTGRES_PASSWORD de Supabase>@supabase-db:5432/postgres`
+   - `SESSION_SECRET` = `openssl rand -hex 32`
+   - Polar: vacías por ahora.
+3. **Red**: activar *Connect To Predefined Network* en este recurso **y** en el
+   servicio `supabase` (así ambos quedan en la red `coolify` y `supabase-db`
+   resuelve por nombre). Redeploya Supabase (~30s).
+4. **FQDN**: `cuentas.tiklivetts.es` → puerto `4000`. DNS: A record `cuentas` →
+   IP del VPS.
+5. Deploy. Logs esperados: `[migrate] 2 migracion(es) aplicadas` +
+   `[servicio-cuentas] escuchando en :4000`.
+6. Verificar: `curl https://cuentas.tiklivetts.es/api/health` → `{"ok":true}`.
