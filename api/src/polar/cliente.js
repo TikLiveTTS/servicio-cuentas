@@ -1,19 +1,24 @@
 'use strict';
 
-// Cliente REST de Polar sobre undici. Patron de resiliencia como
+// Cliente REST de Polar. fetch nativo (Node >=18). Patron de resiliencia como
 // telemetria-tts/transport.js: timeout con AbortSignal, reintentos ante
-// red/timeout (no ante 4xx).
+// red/5xx (no ante 4xx).
 //
-// TODO(agente-03): completar los metodos que haga falta (crear producto no,
-// eso se hace desde el dashboard; si checkout + leer suscripcion para el job
-// de reconciliacion).
+// El OAT es un ORGANIZATION token: nunca se pasa organization_id en el body,
+// Polar lo infiere del token.
 
-const { fetch } = require('undici');
 const config = require('../config');
 
-const BASE = 'https://api.polar.sh/v1';
+const BASE = config.polarEnv === 'production'
+  ? 'https://api.polar.sh/v1'
+  : 'https://sandbox-api.polar.sh/v1';
 
 async function polarFetch(path, { method = 'GET', body, retries = 2 } = {}) {
+  if (!config.polarApiKey) {
+    const e = new Error('POLAR_API_KEY no configurado');
+    e.code = 'polar_no_configurado';
+    throw e;
+  }
   const url = `${BASE}${path}`;
   const opts = {
     method,
@@ -21,18 +26,16 @@ async function polarFetch(path, { method = 'GET', body, retries = 2 } = {}) {
       Authorization: `Bearer ${config.polarApiKey}`,
       'Content-Type': 'application/json',
     },
-    signal: AbortSignal.timeout(8000),
   };
   if (body !== undefined) opts.body = JSON.stringify(body);
 
   let lastErr;
   for (let intento = 0; intento <= retries; intento++) {
     try {
-      const res = await fetch(url, opts);
+      const res = await fetch(url, { ...opts, signal: AbortSignal.timeout(8000) });
       const text = await res.text();
       const json = text ? JSON.parse(text) : null;
       if (res.ok) return json;
-      // 4xx: error del request, no reintentar.
       if (res.status >= 400 && res.status < 500) {
         const e = new Error(`Polar ${res.status}: ${text}`);
         e.status = res.status;
