@@ -1,8 +1,11 @@
 'use strict';
 
-// Verificacion de webhooks de Polar con la libreria standardwebhooks.
-// IMPORTANTE (01-hallazgos.md seccion 2): el secreto que da Polar (polar_whs_...)
-// hay que base64-encodearlo ENTERO antes de pasarlo a new Webhook().
+// Verificacion de webhooks de Polar con standardwebhooks.
+//
+// Polar entrega el secret en dos formatos segun version:
+//  - 'whsec_<base64>'  -> formato estandar, se pasa tal cual a new Webhook()
+//  - 'polar_whs_<...>'  -> hay que base64-encodear el string ENTERO antes
+//    (quirk documentado por Polar para ese formato)
 // Requiere el body RAW (Buffer/string), no el JSON ya parseado.
 
 const { Webhook } = require('standardwebhooks');
@@ -10,14 +13,18 @@ const config = require('../config');
 
 let wh = null;
 function getWebhook() {
-  if (!config.polarWebhookSecret) {
+  const secret = config.polarWebhookSecret;
+  if (!secret) {
     const e = new Error('POLAR_WEBHOOK_SECRET no configurado');
     e.code = 'polar_no_configurado';
     throw e;
   }
   if (!wh) {
-    const secretB64 = Buffer.from(config.polarWebhookSecret.trim(), 'utf-8').toString('base64');
-    wh = new Webhook(secretB64);
+    const s = secret.trim();
+    const arg = s.startsWith('polar_whs_')
+      ? Buffer.from(s, 'utf-8').toString('base64')
+      : s; // 'whsec_...' o base64 crudo
+    wh = new Webhook(arg);
   }
   return wh;
 }
