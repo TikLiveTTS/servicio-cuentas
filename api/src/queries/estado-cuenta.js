@@ -1,6 +1,7 @@
 'use strict';
 
 const { query } = require('../db');
+const { suscripcionActiva } = require('./suscripcion-activa');
 
 // Estado completo de la cuenta para /api/session y /api/entitlements.
 //
@@ -17,18 +18,7 @@ async function estadoCuenta(userId) {
   const user = uRows[0];
   if (!user) return null;
 
-  const { rows: sRows } = await query(
-    `SELECT status, current_period_end, cancel_at_period_end
-       FROM subscriptions
-      WHERE user_id = $1
-        AND status IN ('active','canceled')
-        AND current_period_end IS NOT NULL
-        AND current_period_end > now()
-      ORDER BY current_period_end DESC
-      LIMIT 1`,
-    [userId]
-  );
-  const sub = sRows[0] || null;
+  const sub = await suscripcionActiva(userId);
   const plan = sub ? 'pro' : 'free';
 
   const { rows: eRows } = await query(
