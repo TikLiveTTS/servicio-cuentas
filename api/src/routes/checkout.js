@@ -36,14 +36,15 @@ router.post('/checkout', requireAuth, wrap(async (req, res) => {
   }
 }));
 
-// Pagina de retorno de Polar (el usuario vuelve aca en el navegador externo).
+// Pagina de retorno de Polar (el usuario vuelve aca en una ventana Electron
+// propia de la app -electron-shell/window.js-, que detecta esta URL y la
+// cierra sola en 1.5s).
 router.get('/checkout/ok', (req, res) => {
   res.type('html').send(`<!doctype html><meta charset=utf-8>
 <title>Pago recibido</title>
 <style>body{font:16px system-ui;margin:15vh auto;max-width:28rem;text-align:center;color:#222}</style>
 <h1>&#10003; Pago recibido</h1>
-<p>Ya podes cerrar esta pesta&#241;a y volver a TikLive TTS. Tu plan Pro se
-activa en unos segundos.</p>`);
+<p>Tu plan Pro ya se activo. Esta ventana se cierra sola.</p>`);
 });
 
 module.exports = router;
