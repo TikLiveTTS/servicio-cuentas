@@ -17,12 +17,6 @@ function opt(name, def) {
   return v == null || v === '' ? def : String(v).trim();
 }
 
-function bool(name, def) {
-  const v = process.env[name];
-  if (v == null || v === '') return def;
-  return /^(1|true|yes|on)$/i.test(String(v).trim());
-}
-
 function int(name, def) {
   const n = parseInt(process.env[name], 10);
   return Number.isFinite(n) ? n : def;
@@ -43,7 +37,10 @@ const config = {
   polarProductIdProAnual: opt('POLAR_PRODUCT_ID_PRO_ANUAL', ''),
   polarEnv: opt('POLAR_ENV', 'test'),
 
-  trustProxy: bool('TRUST_PROXY', true),
+  // Hop count, no booleano: con `true` Express confía en TODO el header
+  // X-Forwarded-For (el primer valor, que el cliente controla). `1` = confía
+  // solo en el proxy inmediato (Traefik), que es el que agrega el IP real.
+  trustProxy: int('TRUST_PROXY', 1),
   publicOrigin: opt('PUBLIC_ORIGIN', '*')
     .split(',')
     .map((o) => o.trim())

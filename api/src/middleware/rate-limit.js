@@ -2,16 +2,17 @@
 
 // Rate limit en memoria por IP. Suficiente para un solo proceso; si algún día
 // hay varias réplicas, mover a Postgres o Redis.
-function makeRateLimit({ max, windowMs, message }) {
-  const hits = new Map(); // ip -> { count, resetAt }
+function makeRateLimit({ max, windowMs, message, keyFn }) {
+  const hits = new Map(); // key -> { count, resetAt }
+  const getKey = keyFn || ((req) => req.ip || 'desconocida');
 
   return function rateLimit(req, res, next) {
     const now = Date.now();
-    const ip = req.ip || 'desconocida';
-    let e = hits.get(ip);
+    const key = getKey(req);
+    let e = hits.get(key);
     if (!e || now > e.resetAt) {
       e = { count: 0, resetAt: now + windowMs };
-      hits.set(ip, e);
+      hits.set(key, e);
     }
     e.count++;
     if (e.count > max) {
