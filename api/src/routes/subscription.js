@@ -27,6 +27,13 @@ router.post('/subscription/cancel', requireAuth, wrap(async (req, res) => {
     if (err.code === 'polar_no_configurado') {
       return fail(res, 501, 'errors.notImplemented', 'Cancelacion no configurada');
     }
+    // 4xx de Polar (ej. "AlreadyCanceledSubscription") no es un fallo de red,
+    // es Polar diciendo que el estado que queriamos ya esta -> exito, no 502.
+    // Vista real: una carrera entre dos intentos del usuario devolvio esto.
+    if (err.status && err.status < 500) {
+      await query(`UPDATE subscriptions SET cancel_at_period_end = true, updated_at = now() WHERE id = $1`, [sub.id]);
+      return res.json({ ok: true, alreadyCanceled: true });
+    }
     console.error('[subscription] cancelar fallo:', err.message);
     return fail(res, 502, 'errors.polarUnavailable', 'No se pudo cancelar la suscripcion');
   }
