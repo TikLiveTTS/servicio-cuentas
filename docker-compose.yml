@@ -19,8 +19,8 @@ services:
       # Opcionales.
       PORT: 4000
       SESSION_HOURS: ${SESSION_HOURS:-720}
-      TRUST_PROXY: ${TRUST_PROXY:-true}
-      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-*}
+      TRUST_PROXY: ${TRUST_PROXY:-1}
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-}
       RECONCILE_EVERY_HOURS: ${RECONCILE_EVERY_HOURS:-6}
       PUBLIC_URL: ${PUBLIC_URL:-https://cuentas.tiklivetts.es}
     expose:

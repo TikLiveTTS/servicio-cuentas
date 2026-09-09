@@ -41,7 +41,11 @@ const config = {
   // X-Forwarded-For (el primer valor, que el cliente controla). `1` = confía
   // solo en el proxy inmediato (Traefik), que es el que agrega el IP real.
   trustProxy: int('TRUST_PROXY', 1),
-  publicOrigin: opt('PUBLIC_ORIGIN', '*')
+  // La app Electron llama sin Origin (o 'null') -> eso ya se deja pasar
+  // aparte en index.js sin importar esta lista. Hoy no hay ningun consumidor
+  // legitimo desde un navegador, asi que el default es "ninguno" en vez de
+  // '*' (abierto a cualquier sitio).
+  publicOrigin: opt('PUBLIC_ORIGIN', '')
     .split(',')
     .map((o) => o.trim())
     .filter(Boolean),

@@ -38,6 +38,16 @@ test('hash y verificacion de password', async () => {
   assert.ok(!(await verificarPassword('otra', h)));
 });
 
+test('verificarPassword sigue aceptando hashes del esquema viejo (pre-HMAC)', async () => {
+  const bcrypt = require('bcryptjs');
+  const config = require('../src/config');
+  const { verificarPassword } = require('../src/auth/verificar-password');
+  // Esquema viejo: bcrypt(plain + pepper), sin HMAC de por medio.
+  const hashViejo = await bcrypt.hash('secreto123' + config.sessionSecret, 10);
+  assert.ok(await verificarPassword('secreto123', hashViejo), 'un hash pre-existente debe seguir logueando');
+  assert.ok(!(await verificarPassword('otra', hashViejo)));
+});
+
 test('verificar-firma lanza claro si Polar no esta configurado', () => {
   const { verificarFirma } = require('../src/polar/verificar-firma');
   assert.throws(() => verificarFirma('{}', {}), /POLAR_WEBHOOK_SECRET/);

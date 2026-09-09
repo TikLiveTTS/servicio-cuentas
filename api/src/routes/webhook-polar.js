@@ -46,7 +46,9 @@ router.post('/webhooks/polar', express.raw({ type: '*/*' }), async (req, res) =>
   }
 
   try {
-    const nuevo = await marcarEventoWebhook(evento.id || evento.event_id, evento.type);
+    // El id de dedup vive en el header webhook-id (spec Standard Webhooks),
+    // no en el body -> evento.id/evento.event_id daban undefined.
+    const nuevo = await marcarEventoWebhook(req.headers['webhook-id'], evento.type);
     if (!nuevo) return res.json({ received: true, duplicate: true });
 
     if (RELEVANTES.has(evento.type)) {
