@@ -5,6 +5,7 @@ const { verificarFirma } = require('../polar/verificar-firma');
 const { marcarEventoWebhook } = require('../queries/marcar-evento-webhook');
 const { upsertSuscripcion } = require('../queries/upsert-suscripcion');
 const { buscarUsuarioPorEmail } = require('../queries/buscar-usuario-por-email');
+const { resolverPlanId } = require('../polar/resolver-plan-id');
 
 const router = express.Router();
 
@@ -63,6 +64,7 @@ router.post('/webhooks/polar', express.raw({ type: '*/*' }), async (req, res) =>
           status: sub.status,
           cancelAtPeriodEnd: sub.cancel_at_period_end,
           currentPeriodEnd: sub.current_period_end || sub.ends_at || null,
+          planId: resolverPlanId(sub.product_id),
         });
         console.log(`[webhook-polar] ${evento.type} user=${userId} status=${sub.status}`);
       }

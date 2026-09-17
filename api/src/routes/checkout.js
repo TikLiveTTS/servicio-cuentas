@@ -9,10 +9,19 @@ const { crearCheckout } = require('../polar/crear-checkout');
 
 const router = express.Router();
 
+// plan del body -> product_id de Polar. Agregar un plan nuevo es sumar una
+// entrada aca (+ su env var en config.js) -- mismo criterio que resolver-plan-id.js.
+const PRODUCT_ID_POR_PLAN = {
+  pro: () => config.polarProductIdProAnual,
+  'sin-promos': () => config.polarProductIdSinPromos,
+};
+
 router.post('/checkout', requireAuth, wrap(async (req, res) => {
   const plan = (req.body && req.body.plan) || 'pro';
-  if (plan !== 'pro') return fail(res, 400, 'errors.invalidBody', 'Plan desconocido');
-  if (!config.polarApiKey || !config.polarProductIdProAnual) {
+  const getProductId = PRODUCT_ID_POR_PLAN[plan];
+  if (!getProductId) return fail(res, 400, 'errors.invalidBody', 'Plan desconocido');
+  const productId = getProductId();
+  if (!config.polarApiKey || !productId) {
     return fail(res, 501, 'errors.notImplemented', 'Checkout no configurado (Polar)');
   }
 
@@ -21,7 +30,7 @@ router.post('/checkout', requireAuth, wrap(async (req, res) => {
 
   try {
     const { url } = await crearCheckout({
-      productId: config.polarProductIdProAnual,
+      productId,
       customerEmail: user.email,
       externalCustomerId: user.id,
       successUrl: `${config.publicUrl}/api/checkout/ok?checkout_id={CHECKOUT_ID}`,

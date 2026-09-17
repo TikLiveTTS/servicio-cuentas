@@ -10,6 +10,7 @@ const config = require('../config');
 const { query } = require('../db');
 const { upsertSuscripcion } = require('../queries/upsert-suscripcion');
 const { polarFetch } = require('../polar/cliente');
+const { resolverPlanId } = require('../polar/resolver-plan-id');
 
 async function purgarSesiones() {
   const { rowCount } = await query('DELETE FROM sessions WHERE expires_at < now()');
@@ -42,6 +43,7 @@ async function reconciliarPolar() {
         status: remoto.status,
         cancelAtPeriodEnd: remoto.cancel_at_period_end,
         currentPeriodEnd: remoto.current_period_end || remoto.ends_at || null,
+        planId: resolverPlanId(remoto.product_id),
       });
       console.log(
         `[reconciliar] divergencia sub=${local.polar_subscription_id} ` +

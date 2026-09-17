@@ -6,10 +6,10 @@ const { suscripcionActiva } = require('./suscripcion-activa');
 // Estado completo de la cuenta para /api/session y /api/entitlements.
 //
 // Plan efectivo:
-//   'pro'  si hay una subscription del user con
-//          status IN ('active','canceled') AND current_period_end > now()
-//          (canceled sigue dando acceso hasta fin de período — así funciona Polar)
-//   'free' en cualquier otro caso
+//   sub.plan_id  si hay una subscription del user con
+//                status IN ('active','canceled') AND current_period_end > now()
+//                (canceled sigue dando acceso hasta fin de período — así funciona Polar)
+//   'free'       en cualquier otro caso
 async function estadoCuenta(userId) {
   const { rows: uRows } = await query(
     `SELECT id, email, nombre FROM users WHERE id = $1`,
@@ -19,7 +19,7 @@ async function estadoCuenta(userId) {
   if (!user) return null;
 
   const sub = await suscripcionActiva(userId);
-  const plan = sub ? 'pro' : 'free';
+  const plan = sub ? sub.plan_id : 'free';
 
   const { rows: eRows } = await query(
     `SELECT feature_id FROM entitlements WHERE plan_id = $1`,

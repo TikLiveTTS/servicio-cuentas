@@ -35,6 +35,7 @@ const config = {
   polarApiKey: opt('POLAR_API_KEY', ''),
   polarWebhookSecret: opt('POLAR_WEBHOOK_SECRET', ''),
   polarProductIdProAnual: opt('POLAR_PRODUCT_ID_PRO_ANUAL', ''),
+  polarProductIdSinPromos: opt('POLAR_PRODUCT_ID_SIN_PROMOS', ''),
   polarEnv: opt('POLAR_ENV', 'test'),
 
   // Hop count, no booleano: con `true` Express confía en TODO el header
