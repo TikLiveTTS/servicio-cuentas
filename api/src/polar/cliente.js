@@ -9,9 +9,7 @@
 
 const config = require('../config');
 
-const BASE = config.polarEnv === 'production'
-  ? 'https://api.polar.sh/v1'
-  : 'https://sandbox-api.polar.sh/v1';
+const BASE = 'https://api.polar.sh/v1';
 
 async function polarFetch(path, { method = 'GET', body, retries = 2 } = {}) {
   if (!config.polarApiKey) {

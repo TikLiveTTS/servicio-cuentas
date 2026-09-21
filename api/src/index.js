@@ -69,7 +69,7 @@ async function main() {
   await migrate();
   jobs.start();
   app.listen(config.port, () => {
-    console.log(`[servicio-cuentas] escuchando en :${config.port} (schema ${config.dbSchema}, polar ${config.polarEnv})`);
+    console.log(`[servicio-cuentas] escuchando en :${config.port} (schema ${config.dbSchema})`);
   });
 }
 

@@ -49,7 +49,9 @@ Recurso: proyecto Coolify `servicio-cuentas` / env `production`. Config aplicada
      en la red `coolify` (nombre corto + UUID del recurso Supabase), NO `supabase-db`.
      Verificar con: `getent hosts supabase-db-<uuid>` desde el contenedor.
    - `SESSION_SECRET` = 64 hex (`openssl rand -hex 32`).
-   - Polar: vacías hasta la Fase 2.
+   - Polar (producción, `https://api.polar.sh/v1`): `POLAR_API_KEY` (organization access token),
+     `POLAR_WEBHOOK_SECRET`, `POLAR_PRODUCT_ID_PRO_ANUAL`, `POLAR_PRODUCT_ID_SIN_PROMOS`.
+     Webhook de la organización → `https://cuentas.tiklivetts.es/api/webhooks/polar`.
 3. **Red**: *Advanced → Docker compose → Predefined network* = **Connect to
    predefined network** en este recurso **y** en el servicio `supabase`
    (*General → Network attachment*). Restart de Supabase (~60s).
