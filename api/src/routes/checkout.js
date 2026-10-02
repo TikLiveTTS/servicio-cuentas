@@ -6,21 +6,20 @@ const { requireAuth } = require('../middleware/require-auth');
 const { fail, wrap } = require('../lib/errores');
 const { buscarUsuarioPorId } = require('../queries/buscar-usuario-por-id');
 const { crearCheckout } = require('../polar/crear-checkout');
+const { resolverProductoId } = require('../polar/resolver-producto-id');
+const { INTERVALOS } = require('../polar/catalogo-productos');
+
+const PLANES = ['pro', 'sin-promos'];
 
 const router = express.Router();
 
-// plan del body -> product_id de Polar. Agregar un plan nuevo es sumar una
-// entrada aca (+ su env var en config.js) -- mismo criterio que resolver-plan-id.js.
-const PRODUCT_ID_POR_PLAN = {
-  pro: () => config.polarProductIdProAnual,
-  'sin-promos': () => config.polarProductIdSinPromos,
-};
-
 router.post('/checkout', requireAuth, wrap(async (req, res) => {
   const plan = (req.body && req.body.plan) || 'pro';
-  const getProductId = PRODUCT_ID_POR_PLAN[plan];
-  if (!getProductId) return fail(res, 400, 'errors.invalidBody', 'Plan desconocido');
-  const productId = getProductId();
+  // Sin intervalo = anual (builds viejos de la app).
+  const intervalo = (req.body && req.body.intervalo) || 'year';
+  if (!PLANES.includes(plan)) return fail(res, 400, 'errors.invalidBody', 'Plan desconocido');
+  if (!INTERVALOS.includes(intervalo)) return fail(res, 400, 'errors.invalidBody', 'Intervalo invalido');
+  const productId = resolverProductoId(plan, intervalo);
   if (!config.polarApiKey || !productId) {
     return fail(res, 501, 'errors.notImplemented', 'Checkout no configurado (Polar)');
   }
@@ -53,7 +52,7 @@ router.get('/checkout/ok', (req, res) => {
 <title>Pago recibido</title>
 <style>body{font:16px system-ui;margin:15vh auto;max-width:28rem;text-align:center;color:#222}</style>
 <h1>&#10003; Pago recibido</h1>
-<p>Tu plan Pro ya se activo. Esta ventana se cierra sola.</p>`);
+<p>Tu plan ya se activo. Esta ventana se cierra sola.</p>`);
 });
 
 module.exports = router;

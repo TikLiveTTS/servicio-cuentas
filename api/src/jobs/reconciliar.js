@@ -10,7 +10,7 @@ const config = require('../config');
 const { query } = require('../db');
 const { upsertSuscripcion } = require('../queries/upsert-suscripcion');
 const { polarFetch } = require('../polar/cliente');
-const { resolverPlanId } = require('../polar/resolver-plan-id');
+const { camposSuscripcion } = require('../polar/campos-suscripcion');
 
 async function purgarSesiones() {
   const { rowCount } = await query('DELETE FROM sessions WHERE expires_at < now()');
@@ -20,7 +20,8 @@ async function purgarSesiones() {
 async function reconciliarPolar() {
   if (!config.polarApiKey) return;
   const { rows } = await query(
-    `SELECT id, user_id, polar_subscription_id, status, current_period_end
+    `SELECT id, user_id, polar_subscription_id, status, current_period_end,
+           intervalo, siguiente_intervalo
        FROM subscriptions
       WHERE polar_subscription_id IS NOT NULL
         AND status IN ('active','canceled','past_due')`
@@ -36,15 +37,11 @@ async function reconciliarPolar() {
     const mismaFecha =
       String(local.current_period_end && new Date(local.current_period_end).toISOString()) ===
       String(remoto.current_period_end && new Date(remoto.current_period_end).toISOString());
-    if (remoto.status !== local.status || !mismaFecha) {
-      await upsertSuscripcion({
-        userId: local.user_id,
-        polarSubscriptionId: local.polar_subscription_id,
-        status: remoto.status,
-        cancelAtPeriodEnd: remoto.cancel_at_period_end,
-        currentPeriodEnd: remoto.current_period_end || remoto.ends_at || null,
-        planId: resolverPlanId(remoto.product_id),
-      });
+    const campos = camposSuscripcion(remoto);
+    const mismoIntervalo =
+      campos.intervalo === local.intervalo && campos.siguienteIntervalo === local.siguiente_intervalo;
+    if (remoto.status !== local.status || !mismaFecha || !mismoIntervalo) {
+      await upsertSuscripcion({ userId: local.user_id, ...campos });
       console.log(
         `[reconciliar] divergencia sub=${local.polar_subscription_id} ` +
         `local=${local.status} remoto=${remoto.status} -> corregido`

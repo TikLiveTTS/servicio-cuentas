@@ -17,6 +17,7 @@ const entitlementsRoutes = require('./routes/entitlements');
 const accountRoutes = require('./routes/account');
 const checkoutRoutes = require('./routes/checkout');
 const subscriptionRoutes = require('./routes/subscription');
+const cambiarIntervaloRoutes = require('./routes/cambiar-intervalo');
 const webhookRoutes = require('./routes/webhook-polar');
 
 const app = express();
@@ -53,6 +54,7 @@ app.use('/api', entitlementsRoutes);
 app.use('/api', accountRoutes);
 app.use('/api', checkoutRoutes);
 app.use('/api', subscriptionRoutes);
+app.use('/api', cambiarIntervaloRoutes);
 
 // 404 JSON.
 app.use((req, res) => res.status(404).json({ error: 'No encontrado', errorKey: 'errors.notFound' }));

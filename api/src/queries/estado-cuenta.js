@@ -35,6 +35,8 @@ async function estadoCuenta(userId) {
           status: sub.status,
           currentPeriodEnd: sub.current_period_end,
           cancelAtPeriodEnd: sub.cancel_at_period_end,
+          interval: sub.intervalo,
+          nextInterval: sub.siguiente_intervalo,
         }
       : null,
   };

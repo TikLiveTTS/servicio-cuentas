@@ -36,6 +36,8 @@ const config = {
   polarWebhookSecret: opt('POLAR_WEBHOOK_SECRET', ''),
   polarProductIdProAnual: opt('POLAR_PRODUCT_ID_PRO_ANUAL', ''),
   polarProductIdSinPromos: opt('POLAR_PRODUCT_ID_SIN_PROMOS', ''),
+  polarProductIdProMensual: opt('POLAR_PRODUCT_ID_PRO_MENSUAL', ''),
+  polarProductIdSinPromosMensual: opt('POLAR_PRODUCT_ID_SIN_PROMOS_MENSUAL', ''),
 
   // Hop count, no booleano: con `true` Express confía en TODO el header
   // X-Forwarded-For (el primer valor, que el cliente controla). `1` = confía

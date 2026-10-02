@@ -7,7 +7,8 @@ const { query } = require('../db');
 // necesita el mismo dato (el polar_subscription_id de esa fila).
 async function suscripcionActiva(userId) {
   const { rows } = await query(
-    `SELECT id, plan_id, polar_subscription_id, status, cancel_at_period_end, current_period_end
+    `SELECT id, plan_id, polar_subscription_id, status, cancel_at_period_end, current_period_end,
+            intervalo, siguiente_intervalo
        FROM subscriptions
       WHERE user_id = $1
         AND status IN ('active','canceled')

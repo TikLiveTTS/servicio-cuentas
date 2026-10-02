@@ -3,24 +3,28 @@
 
 // Precios de los productos de pago en Polar PRODUCCION (https://api.polar.sh/v1).
 //
-//   node scripts/polar-precios.js crear-test            crea Pro y Sin Promos a 1 USD si no existen
+//   node scripts/polar-precios.js crear-test            crea los 4 productos (Pro/Sin Promos, mensual/anual) a 1 USD si no existen
 //   node scripts/polar-precios.js restaurar             deja cada producto en su precio original
 //   node scripts/polar-precios.js webhook              crea el webhook de la organizacion (usa POLAR_WEBHOOK_SECRET)
 //   node scripts/polar-precios.js checkout-test         crea una checkout session por producto y muestra la URL (no cobra)
 //   ... --apply                                         sin esto es dry-run (solo lee, no escribe)
 //
 // Entorno: POLAR_API_KEY (organization access token, NUNCA se imprime).
-// Para `restaurar` y `checkout-test`: POLAR_PRODUCT_ID_PRO_ANUAL y POLAR_PRODUCT_ID_SIN_PROMOS.
+// Para `restaurar` y `checkout-test`: POLAR_PRODUCT_ID_PRO_ANUAL y POLAR_PRODUCT_ID_SIN_PROMOS
+// (los *_MENSUAL se saltan si todavia no estan cargados).
 // Para `webhook`: POLAR_WEBHOOK_SECRET (formato polar_whs_<>=32 chars; el mismo valor va a Coolify).
 // Al final siempre verifica por API que el precio quedo como se esperaba.
 
 const BASE = 'https://api.polar.sh/v1';
 const KEY = process.env.POLAR_API_KEY;
 
-// centavos USD, anual. Pro: migracion 003; Sin Promos: migracion 005.
+// centavos USD. Anuales: migraciones 003/005; mensuales: contrato planes mensuales.
+// opcional: el id mensual se carga recien despues de crear el producto.
 const PRODUCTOS = {
-  pro: { env: 'POLAR_PRODUCT_ID_PRO_ANUAL', nombre: 'Pro', original: 8500, descripcion: 'TikLiveTTS Pro — suscripción anual' },
-  'sin-promos': { env: 'POLAR_PRODUCT_ID_SIN_PROMOS', nombre: 'Sin Promos', original: 2500, descripcion: 'TikLiveTTS Sin Promos — suscripción anual' },
+  pro: { env: 'POLAR_PRODUCT_ID_PRO_ANUAL', nombre: 'Pro', intervalo: 'year', original: 8500, descripcion: 'TikLiveTTS Pro — suscripción anual' },
+  'sin-promos': { env: 'POLAR_PRODUCT_ID_SIN_PROMOS', nombre: 'Sin Promos', intervalo: 'year', original: 2500, descripcion: 'TikLiveTTS Sin Promos — suscripción anual' },
+  'pro-mensual': { env: 'POLAR_PRODUCT_ID_PRO_MENSUAL', nombre: 'Pro Mensual', intervalo: 'month', original: 800, opcional: true, descripcion: 'TikLiveTTS Pro — suscripción mensual' },
+  'sin-promos-mensual': { env: 'POLAR_PRODUCT_ID_SIN_PROMOS_MENSUAL', nombre: 'Sin Promos Mensual', intervalo: 'month', original: 300, opcional: true, descripcion: 'TikLiveTTS Sin Promos — suscripción mensual' },
 };
 const TEST_CENTAVOS = 100;
 const WEBHOOK_URL = 'https://cuentas.tiklivetts.es/api/webhooks/polar';
@@ -46,10 +50,10 @@ const precioDe = (p) => {
   return f ? { monto: f.price_amount, moneda: f.price_currency } : null;
 };
 
-async function verificar(id, esperado) {
+async function verificar(id, esperado, intervalo) {
   const p = await api(`/products/${id}`);
   const pr = precioDe(p);
-  const ok = pr && pr.monto === esperado && pr.moneda === 'usd' && p.recurring_interval === 'year';
+  const ok = pr && pr.monto === esperado && pr.moneda === 'usd' && p.recurring_interval === intervalo;
   console.log(`  verificado ${p.name} (${id}): ${pr ? pr.monto + ' ' + pr.moneda : 'sin precio fijo'} ${p.recurring_interval} -> ${ok ? 'OK' : 'MAL'}`);
   return ok;
 }
@@ -68,17 +72,17 @@ async function main() {
     for (const [plan, d] of Object.entries(PRODUCTOS)) {
       const ya = existentes.find((p) => p.name === d.nombre);
       if (ya) { console.log(`- ${d.nombre}: ya existe (${ya.id}), no se toca`); ids[plan] = ya.id; continue; }
-      console.log(`- ${d.nombre}: crear year ${TEST_CENTAVOS} usd`);
+      console.log(`- ${d.nombre}: crear ${d.intervalo} ${TEST_CENTAVOS} usd`);
       if (!apply) continue;
       const p = await api('/products/', 'POST', {
         name: d.nombre,
         description: d.descripcion,
-        recurring_interval: 'year',
+        recurring_interval: d.intervalo,
         prices: [{ amount_type: 'fixed', price_amount: TEST_CENTAVOS, price_currency: 'usd' }],
       });
       ids[plan] = p.id;
     }
-    if (apply) for (const [plan, id] of Object.entries(ids)) todoOk = (await verificar(id, TEST_CENTAVOS)) && todoOk;
+    if (apply) for (const [plan, id] of Object.entries(ids)) todoOk = (await verificar(id, TEST_CENTAVOS, PRODUCTOS[plan].intervalo)) && todoOk;
   } else if (modo === 'webhook') {
     const secret = process.env.POLAR_WEBHOOK_SECRET;
     if (!secret || !secret.startsWith('polar_whs_') || secret.length < 32) throw new Error('POLAR_WEBHOOK_SECRET debe empezar con polar_whs_ y tener >= 32 caracteres');
@@ -92,6 +96,7 @@ async function main() {
   } else if (modo === 'checkout-test') {
     for (const d of Object.values(PRODUCTOS)) {
       const id = process.env[d.env];
+      if (!id && d.opcional) { console.log(`- ${d.nombre}: sin ${d.env}, se salta`); continue; }
       if (!id) throw new Error(`falta ${d.env}`);
       console.log(`- ${d.nombre} (${id}): crear checkout session (no cobra hasta que alguien pague)`);
       if (!apply) continue;
@@ -103,6 +108,7 @@ async function main() {
   } else {
     for (const [plan, d] of Object.entries(PRODUCTOS)) {
       const id = process.env[d.env];
+      if (!id && d.opcional) { console.log(`- ${d.nombre}: sin ${d.env}, se salta`); continue; }
       if (!id) throw new Error(`falta ${d.env}`);
       const p = await api(`/products/${id}`);
       console.log(`- ${d.nombre} (${id}): ${JSON.stringify(precioDe(p))} -> ${d.original} usd`);
@@ -110,7 +116,7 @@ async function main() {
       await api(`/products/${id}`, 'PATCH', {
         prices: [{ amount_type: 'fixed', price_amount: d.original, price_currency: 'usd' }],
       });
-      todoOk = (await verificar(id, d.original)) && todoOk;
+      todoOk = (await verificar(id, d.original, d.intervalo)) && todoOk;
     }
   }
   if (apply) console.log(JSON.stringify(ids));

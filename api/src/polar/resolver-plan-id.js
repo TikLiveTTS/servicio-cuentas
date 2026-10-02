@@ -1,15 +1,14 @@
 'use strict';
 
-const config = require('../config');
+const { catalogoProductos } = require('./catalogo-productos');
 
 // Mapea el product_id que manda Polar (webhook/reconciliacion) a nuestro
-// plan_id local. Unico lugar con esta tabla -- agregar un plan nuevo es sumar
-// una linea aca (+ su env var en config.js), sin tocar webhook-polar.js ni
-// reconciliar.js. Default 'pro': preserva el comportamiento previo a que
-// existiera un segundo plan (y cubre eventos de test sin product_id).
+// plan_id local. Default 'pro': preserva el comportamiento previo a que
+// existiera un segundo plan (y cubre eventos de test sin product_id). Por eso
+// todo producto no-pro DEBE estar en el catalogo, o se escalaria a 'pro'.
 function resolverPlanId(productId) {
-  if (productId && productId === config.polarProductIdSinPromos) return 'sin-promos';
-  return 'pro';
+  const producto = catalogoProductos().find((p) => p.id === productId);
+  return producto ? producto.plan : 'pro';
 }
 
 module.exports = { resolverPlanId };
