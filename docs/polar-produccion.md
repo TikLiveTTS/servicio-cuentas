@@ -6,8 +6,8 @@ Org `tiklivetts` (`088bfba1-e79f-43d1-82d5-683efa007ccd`). API: `https://api.pol
 |---|---|---|---|
 | pro (año) | `11e9dfe6-6b0a-4682-b4de-b2606d66fef0` | 85 USD/año (8500) | 1 USD/año |
 | sin-promos (año) | `e1d5cdce-7f7e-4681-b161-3f409807d85c` | 25 USD/año (2500) | 1 USD/año |
-| pro (mes) | _pendiente: se carga tras crear el producto_ | 8 USD/mes (800) | 1 USD/mes |
-| sin-promos (mes) | _pendiente: se carga tras crear el producto_ | 3 USD/mes (300) | 1 USD/mes |
+| pro (mes) | `bc669875-1d54-4f87-b14e-565f67b498a2` | 8 USD/mes (800) | 1 USD/mes |
+| sin-promos (mes) | `5d3fd9f1-b6fb-4df8-a2ba-16727c2e2d20` | 3 USD/mes (300) | 1 USD/mes |
 
 El plan local es siempre `pro` | `sin-promos`; mensual y anual solo cambian el producto de Polar
 (la columna `subscriptions.intervalo` guarda cuál, migración 007). Un product_id que no esté en las 4 env vars
