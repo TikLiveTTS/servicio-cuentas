@@ -35,7 +35,7 @@ app.use((req, res, next) => {
     config.publicOrigin.includes(origin);
   if (allow && origin) res.set('Access-Control-Allow-Origin', origin);
   res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.set('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
 });

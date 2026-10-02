@@ -4,7 +4,8 @@ const { query } = require('../db');
 
 // Refleja el estado de una suscripción de Polar en nuestra tabla. Idempotente
 // por polar_subscription_id. Lo usa el handler de webhook (agente 03) y el job
-// de reconciliación.
+// de reconciliación. Si el usuario ya no existe (cuenta eliminada: el webhook
+// subscription.revoked llega despues del borrado) no inserta nada.
 async function upsertSuscripcion({
   userId,
   polarSubscriptionId,
@@ -18,7 +19,8 @@ async function upsertSuscripcion({
   const { rows } = await query(
     `INSERT INTO subscriptions
        (user_id, plan_id, status, polar_subscription_id, cancel_at_period_end, current_period_end, intervalo, siguiente_intervalo)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+     SELECT $1::uuid, $2::text, $3::text, $4::text, $5::boolean, $6::timestamptz, $7::text, $8::text
+      WHERE EXISTS (SELECT 1 FROM users WHERE id = $1)
      ON CONFLICT (polar_subscription_id) DO UPDATE SET
        status = EXCLUDED.status,
        cancel_at_period_end = EXCLUDED.cancel_at_period_end,
