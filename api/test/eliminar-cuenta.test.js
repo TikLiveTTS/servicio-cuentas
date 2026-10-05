@@ -14,6 +14,7 @@ const llamadas = [];
 let suscripciones;
 let fallaRevocar;
 let fallaCliente;
+let fallaCancelar;
 
 function stub(mod, exp) {
   const p = require.resolve(mod);
@@ -29,6 +30,9 @@ stub('../src/queries/suscripciones-polar-vigentes', { suscripcionesPolarVigentes
 stub('../src/polar/revocar-suscripcion', {
   revocarSuscripcion: async (id) => { llamadas.push(`revocar:${id}`); if (fallaRevocar) throw fallaRevocar; },
 });
+stub('../src/polar/cancelar-suscripcion', {
+  cancelarSuscripcion: async (id) => { llamadas.push(`cancelar-fin-periodo:${id}`); if (fallaCancelar) throw fallaCancelar; },
+});
 stub('../src/polar/eliminar-cliente', {
   eliminarCliente: async (id) => { llamadas.push(`cliente:${id}`); if (fallaCliente) throw fallaCliente; },
 });
@@ -42,6 +46,7 @@ beforeEach(() => {
   suscripciones = [];
   fallaRevocar = null;
   fallaCliente = null;
+  fallaCancelar = null;
 });
 
 async function eliminar(body) {
@@ -64,8 +69,9 @@ async function eliminar(body) {
 // Captura console.log/error durante fn() para inspeccionar lo logueado.
 async function conLogsCapturados(fn) {
   const lineas = [];
-  const originales = { log: console.log, error: console.error };
+  const originales = { log: console.log, warn: console.warn, error: console.error };
   console.log = (...a) => lineas.push(a.join(' '));
+  console.warn = (...a) => lineas.push(a.join(' '));
   console.error = (...a) => lineas.push(a.join(' '));
   try {
     await fn();
@@ -137,4 +143,32 @@ test('no loguea la contrasena ni en exito ni en fallo', async () => {
   });
   assert.ok(lineas.length > 0);
   assert.ok(lineas.every((l) => !l.includes(PASSWORD)));
+});
+
+test('revocar da 409 (cambio pendiente): cae a cancelar al fin del periodo y borra todo', async () => {
+  suscripciones = ['sub-1'];
+  fallaRevocar = Object.assign(new Error('Polar 409'), { status: 409 });
+  let res;
+  const lineas = await conLogsCapturados(async () => { res = await eliminar({ password: PASSWORD }); });
+  assert.deepStrictEqual(res.json, { ok: true });
+  assert.deepStrictEqual(llamadas, ['revocar:sub-1', 'cancelar-fin-periodo:sub-1', 'cliente:user-1', 'usuario:user-1']);
+  assert.ok(lineas.some((l) => l.includes('409')));
+});
+
+test('409 y tambien falla el cancelar al fin del periodo: 502 y NO se borra el usuario', async () => {
+  suscripciones = ['sub-1'];
+  fallaRevocar = Object.assign(new Error('Polar 409'), { status: 409 });
+  fallaCancelar = Object.assign(new Error('Polar 500'), { status: 500 });
+  const res = await eliminar({ password: PASSWORD });
+  assert.strictEqual(res.status, 502);
+  assert.deepStrictEqual(llamadas, ['revocar:sub-1', 'cancelar-fin-periodo:sub-1']);
+});
+
+test('409 y el cancelar da 403 (ya cancelada): se considera cumplido y borra', async () => {
+  suscripciones = ['sub-1'];
+  fallaRevocar = Object.assign(new Error('Polar 409'), { status: 409 });
+  fallaCancelar = Object.assign(new Error('Polar 403'), { status: 403 });
+  const res = await eliminar({ password: PASSWORD });
+  assert.deepStrictEqual(res.json, { ok: true });
+  assert.ok(llamadas.includes('usuario:user-1'));
 });
