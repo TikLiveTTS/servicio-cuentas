@@ -7,18 +7,25 @@ const config = require('./config');
 const { pool, waitForDb } = require('./db');
 const { migrate } = require('../db/migrate');
 const jobs = require('./jobs/reconciliar');
+const { iniciarServidorRealtime } = require('./realtime/servidor');
 
 const healthRoutes = require('./routes/health');
 const registerRoutes = require('./routes/register');
 const loginRoutes = require('./routes/login');
+const authGoogleRoutes = require('./routes/auth-google');
 const logoutRoutes = require('./routes/logout');
 const sessionRoutes = require('./routes/session');
 const entitlementsRoutes = require('./routes/entitlements');
 const accountRoutes = require('./routes/account');
+const avatarBannerRoutes = require('./routes/avatar-banner');
+const plataformasRoutes = require('./routes/plataformas');
 const checkoutRoutes = require('./routes/checkout');
 const subscriptionRoutes = require('./routes/subscription');
 const cambiarIntervaloRoutes = require('./routes/cambiar-intervalo');
+const chatRoutes = require('./routes/chat');
 const webhookRoutes = require('./routes/webhook-polar');
+const webhookTwitchRoutes = require('./routes/webhook-twitch');
+const webhookKickRoutes = require('./routes/webhook-kick');
 
 const app = express();
 app.set('trust proxy', config.trustProxy);
@@ -40,21 +47,27 @@ app.use((req, res, next) => {
   next();
 });
 
-// El webhook de Polar necesita el body raw -> se monta ANTES del express.json().
+// Los webhooks necesitan el body raw -> se montan ANTES del express.json().
 app.use('/api', webhookRoutes);
+app.use('/api', webhookTwitchRoutes);
+app.use('/api', webhookKickRoutes);
 
 app.use(express.json({ limit: 64 * 1024 }));
 
 app.use(healthRoutes);
 app.use('/api/auth', registerRoutes);
 app.use('/api/auth', loginRoutes);
+app.use('/api/auth', authGoogleRoutes);
 app.use('/api/auth', logoutRoutes);
 app.use('/api', sessionRoutes);
 app.use('/api', entitlementsRoutes);
 app.use('/api', accountRoutes);
+app.use('/api', avatarBannerRoutes);
+app.use('/api', plataformasRoutes);
 app.use('/api', checkoutRoutes);
 app.use('/api', subscriptionRoutes);
 app.use('/api', cambiarIntervaloRoutes);
+app.use('/api', chatRoutes);
 
 // 404 JSON.
 app.use((req, res) => res.status(404).json({ error: 'No encontrado', errorKey: 'errors.notFound' }));
@@ -70,9 +83,10 @@ async function main() {
   await waitForDb();
   await migrate();
   jobs.start();
-  app.listen(config.port, () => {
+  const httpServer = app.listen(config.port, () => {
     console.log(`[servicio-cuentas] escuchando en :${config.port} (schema ${config.dbSchema})`);
   });
+  iniciarServidorRealtime(httpServer);
 }
 
 process.on('uncaughtException', (err) => console.error('[uncaught]', err.stack || err));
