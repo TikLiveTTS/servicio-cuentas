@@ -26,6 +26,12 @@ stub('../src/middleware/rate-limit', { makeRateLimit: () => (req, res, next) => 
 stub('../src/queries/actualizar-cuenta', { actualizarCuenta: async () => null });
 stub('../src/queries/buscar-password-hash', { buscarPasswordHash: async () => 'hash-guardado' });
 stub('../src/auth/verificar-password', { verificarPassword: async (plain) => plain === PASSWORD });
+// Rutas de Google de account.js: sin ejercitar en estos tests (todos con
+// password), pero account.js las importa al cargar el router.
+stub('../src/auth/google', { intercambiarCodeGoogle: async () => { throw new Error('no deberia llamarse en estos tests'); } });
+stub('../src/queries/buscar-identidad-usuario', { buscarIdentidadUsuario: async () => null });
+stub('../src/queries/vincular-identidad', { vincularIdentidad: async () => ({ id: 'identidad-1' }) });
+stub('../src/queries/listar-identidades', { listarIdentidades: async () => [] });
 stub('../src/queries/suscripciones-polar-vigentes', { suscripcionesPolarVigentes: async () => suscripciones });
 stub('../src/polar/revocar-suscripcion', {
   revocarSuscripcion: async (id) => { llamadas.push(`revocar:${id}`); if (fallaRevocar) throw fallaRevocar; },

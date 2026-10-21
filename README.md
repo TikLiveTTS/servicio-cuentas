@@ -52,6 +52,14 @@ Recurso: proyecto Coolify `servicio-cuentas` / env `production`. Config aplicada
    - Polar (producción, `https://api.polar.sh/v1`): `POLAR_API_KEY` (organization access token),
      `POLAR_WEBHOOK_SECRET`, `POLAR_PRODUCT_ID_PRO_ANUAL`, `POLAR_PRODUCT_ID_SIN_PROMOS`.
      Webhook de la organización → `https://cuentas.tiklivetts.es/api/webhooks/polar`.
+   - Google OAuth (login/registro con Google): `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
+     — cliente tipo "Desktop app" en Google Cloud Console.
+   - Cloudinary (avatar/banner de perfil): `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`,
+     `CLOUDINARY_API_SECRET`.
+   - Twitch/Kick (vincular cuenta, webhooks, chat): `TWITCH_CLIENT_ID`,
+     `TWITCH_CLIENT_SECRET`, `TWITCH_WEBHOOK_SECRET` (elegido por nosotros),
+     `KICK_CLIENT_ID`, `KICK_CLIENT_SECRET`, `TOKENS_ENCRYPTION_KEY` (64 hex,
+     `openssl rand -hex 32`).
 3. **Red**: *Advanced → Docker compose → Predefined network* = **Connect to
    predefined network** en este recurso **y** en el servicio `supabase`
    (*General → Network attachment*). Restart de Supabase (~60s).
