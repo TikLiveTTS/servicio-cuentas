@@ -14,7 +14,7 @@ const { urlImagen } = require('../cloudinary/url-imagen');
 async function estadoCuenta(userId) {
   const { rows: uRows } = await query(
     `SELECT id, email, nombre, (password_hash IS NOT NULL) AS has_password,
-            avatar_actualizado_at, banner_actualizado_at
+            avatar_actualizado_at, banner_actualizado_at, rol_canal
      FROM users WHERE id = $1`,
     [userId]
   );
@@ -37,6 +37,7 @@ async function estadoCuenta(userId) {
       hasPassword: user.has_password,
       avatarUrl: urlImagen('avatares', user.id, user.avatar_actualizado_at),
       bannerUrl: urlImagen('banners', user.id, user.banner_actualizado_at),
+      rolCanal: user.rol_canal,
     },
     plan,
     entitlements: eRows.map((r) => r.feature_id),
