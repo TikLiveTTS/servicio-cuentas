@@ -25,4 +25,9 @@ function isNickname(s) {
   return typeof s === 'string' && /^[a-zA-Z0-9_.]{2,32}$/.test(s.trim());
 }
 
-module.exports = { requireFields, isEmail, isNickname };
+// Codigo de 6 digitos enviado por email para "olvidaste tu contraseña".
+function isResetCode(s) {
+  return typeof s === 'string' && /^\d{6}$/.test(s.trim());
+}
+
+module.exports = { requireFields, isEmail, isNickname, isResetCode };

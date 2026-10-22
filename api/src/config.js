@@ -61,6 +61,10 @@ const config = {
   twitchWebhookSecret: opt('TWITCH_WEBHOOK_SECRET', ''),
   kickClientId: opt('KICK_CLIENT_ID', ''),
   kickClientSecret: opt('KICK_CLIENT_SECRET', ''),
+  // Resend (envio de emails): opcional para arrancar, igual que el resto.
+  // /api/auth/forgot-password responde 501 explicito si falta.
+  resendApiKey: opt('RESEND_API_KEY', ''),
+  emailFrom: opt('EMAIL_FROM', 'TikLive TTS <noreply@tiklivetts.es>'),
   // 64 hex (openssl rand -hex 32) — clave AES-256 para cifrar los tokens de
   // Twitch/Kick guardados. Sin esto no se puede vincular nada (no hay forma
   // segura de guardar el token), pero el resto del servicio arranca igual.
