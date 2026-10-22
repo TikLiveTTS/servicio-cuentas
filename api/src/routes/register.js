@@ -26,6 +26,9 @@ router.post('/register', limit, requireFields('email', 'password', 'nombre'), wr
     if (err.code === 'email_taken') {
       return fail(res, 409, 'errors.emailTaken', 'Ese email ya esta registrado');
     }
+    if (err.code === 'nickname_taken') {
+      return fail(res, 409, 'errors.nicknameTaken', 'Ese nickname ya esta en uso');
+    }
     throw err;
   }
 
