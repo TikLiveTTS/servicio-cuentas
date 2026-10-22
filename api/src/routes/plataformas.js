@@ -63,11 +63,15 @@ router.post(
   '/account/link/twitch',
   requireAuth,
   limit,
-  requireFields('code', 'redirectUri'),
+  requireFields('code', 'codeVerifier', 'redirectUri'),
   wrap(async (req, res) => {
     let perfil;
     try {
-      perfil = await intercambiarCodeTwitch({ code: req.body.code, redirectUri: req.body.redirectUri });
+      perfil = await intercambiarCodeTwitch({
+        code: req.body.code,
+        codeVerifier: req.body.codeVerifier,
+        redirectUri: req.body.redirectUri,
+      });
     } catch (err) {
       if (err.code === 'twitch_no_configurado') return fail(res, 501, 'errors.notImplemented', 'Vincular Twitch no configurado');
       if (err.code === 'twitch_token_invalido') {

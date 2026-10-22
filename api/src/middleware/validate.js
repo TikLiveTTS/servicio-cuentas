@@ -19,4 +19,10 @@ function isEmail(s) {
   return typeof s === 'string' && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s.trim());
 }
 
-module.exports = { requireFields, isEmail };
+// Nickname = "nombre" elegido por el usuario (se muestra con @ adelante en la
+// UI, ver cuenta.nickname). Letras/numeros/guion bajo/punto, 2 a 32 chars.
+function isNickname(s) {
+  return typeof s === 'string' && /^[a-zA-Z0-9_.]{2,32}$/.test(s.trim());
+}
+
+module.exports = { requireFields, isEmail, isNickname };

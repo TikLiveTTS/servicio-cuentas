@@ -18,7 +18,13 @@ const router = express.Router();
 // Solo nombre en esta fase. Cambio de email/password es un flujo aparte con
 // re-verificacion (fuera de alcance).
 router.patch('/account', requireAuth, requireFields('nombre'), wrap(async (req, res) => {
-  const user = await actualizarCuenta(req.userId, { nombre: req.body.nombre });
+  let user;
+  try {
+    user = await actualizarCuenta(req.userId, { nombre: req.body.nombre });
+  } catch (err) {
+    if (err.code === 'nickname_taken') return fail(res, 409, 'errors.nicknameTaken', 'Ese nickname ya esta en uso');
+    throw err;
+  }
   if (!user) return fail(res, 401, 'errors.unauthorized', 'Usuario no encontrado');
   res.json({ user });
 }));
