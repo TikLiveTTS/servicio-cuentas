@@ -1,5 +1,10 @@
--- 012_beta_tester.sql — flag por usuario para habilitar el canal de
--- actualizaciones experimentales (beta) en el cliente Electron. Default
--- false: por defecto nadie ve versiones prerelease como "ultima version".
+-- 012_beta_tester.sql — rol de canal de actualizaciones por usuario: decide
+-- que versiones del cliente Electron le aparecen como "ultima version".
+--   'user'  (default) — solo estables
+--   'beta'  — estables + beta testers (builds "-beta.N")
+--   'admin' — estables + beta + alpha (builds "-alpha.N", solo para probar
+--             en produccion sin molestar a nadie mas)
+-- Se asigna a mano via psql; no hay ruta admin para esto todavia.
 
-ALTER TABLE users ADD COLUMN beta_tester boolean NOT NULL DEFAULT false;
+ALTER TABLE users ADD COLUMN rol_canal text NOT NULL DEFAULT 'user'
+  CHECK (rol_canal IN ('user', 'beta', 'admin'));

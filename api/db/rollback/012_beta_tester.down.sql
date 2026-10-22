@@ -1,1 +1,1 @@
-ALTER TABLE users DROP COLUMN beta_tester;
+ALTER TABLE users DROP COLUMN rol_canal;
