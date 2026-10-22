@@ -5,7 +5,10 @@ const { verificarFirma } = require('../polar/verificar-firma');
 const { marcarEventoWebhook } = require('../queries/marcar-evento-webhook');
 const { upsertSuscripcion } = require('../queries/upsert-suscripcion');
 const { buscarUsuarioPorEmail } = require('../queries/buscar-usuario-por-email');
+const { buscarUsuarioPorId } = require('../queries/buscar-usuario-por-id');
 const { camposSuscripcion } = require('../polar/campos-suscripcion');
+const { enviarEmail } = require('../email/enviar-email');
+const { plantillaBienvenida } = require('../email/plantilla-bienvenida');
 
 const router = express.Router();
 
@@ -63,6 +66,21 @@ router.post('/webhooks/polar', express.raw({ type: '*/*' }), async (req, res) =>
           ...camposSuscripcion(sub),
         });
         console.log(`[webhook-polar] ${evento.type} user=${userId} status=${sub.status}`);
+
+        // Email de agradecimiento, solo en la creacion real de la
+        // suscripcion (no en cada actualizacion/renovacion). No se espera
+        // ni bloquea la respuesta al webhook: un fallo de envio no debe
+        // hacer que Polar reintente el evento entero.
+        if (evento.type === 'subscription.created') {
+          buscarUsuarioPorId(userId).then((user) => {
+            if (!user) return;
+            return enviarEmail({
+              to: user.email,
+              subject: '¡Gracias por suscribirte! · TikLive TTS',
+              html: plantillaBienvenida(user.nombre),
+            });
+          }).catch((err) => console.error('[webhook-polar] fallo el email de bienvenida:', err.message));
+        }
       }
     }
     res.json({ received: true });
