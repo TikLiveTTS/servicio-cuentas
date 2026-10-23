@@ -17,7 +17,7 @@ test('config carga con env minimo', () => {
 });
 
 test('todas las rutas exportan un router de express', () => {
-  for (const r of ['health', 'register', 'login', 'logout', 'session', 'entitlements', 'account', 'checkout', 'webhook-polar']) {
+  for (const r of ['health', 'register', 'login', 'auth-google', 'logout', 'session', 'entitlements', 'account', 'avatar-banner', 'plataformas', 'chat', 'checkout', 'webhook-polar', 'webhook-twitch', 'webhook-kick']) {
     const router = require(`../src/routes/${r}`);
     assert.equal(typeof router, 'function', `${r} deberia exportar un router`);
   }

@@ -2,7 +2,8 @@
 
 const { query } = require('../db');
 
-// Inserta un usuario. Lanza con code 'email_taken' si el email ya existe.
+// Inserta un usuario. Lanza con code 'email_taken' o 'nickname_taken' segun
+// que constraint unico choco (users_nombre_unico_idx es el nickname).
 async function crearUsuario({ email, passwordHash, nombre }) {
   try {
     const { rows } = await query(
@@ -14,8 +15,8 @@ async function crearUsuario({ email, passwordHash, nombre }) {
     return rows[0];
   } catch (err) {
     if (err.code === '23505') {
-      const e = new Error('email ya registrado');
-      e.code = 'email_taken';
+      const e = new Error(err.constraint === 'users_nombre_unico_idx' ? 'nickname ya tomado' : 'email ya registrado');
+      e.code = err.constraint === 'users_nombre_unico_idx' ? 'nickname_taken' : 'email_taken';
       throw e;
     }
     throw err;

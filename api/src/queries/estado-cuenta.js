@@ -2,6 +2,7 @@
 
 const { query } = require('../db');
 const { suscripcionActiva } = require('./suscripcion-activa');
+const { urlImagen } = require('../cloudinary/url-imagen');
 
 // Estado completo de la cuenta para /api/session y /api/entitlements.
 //
@@ -12,7 +13,9 @@ const { suscripcionActiva } = require('./suscripcion-activa');
 //   'free'       en cualquier otro caso
 async function estadoCuenta(userId) {
   const { rows: uRows } = await query(
-    `SELECT id, email, nombre FROM users WHERE id = $1`,
+    `SELECT id, email, nombre, (password_hash IS NOT NULL) AS has_password,
+            avatar_actualizado_at, banner_actualizado_at, rol_canal
+     FROM users WHERE id = $1`,
     [userId]
   );
   const user = uRows[0];
@@ -27,7 +30,15 @@ async function estadoCuenta(userId) {
   );
 
   return {
-    user: { id: user.id, email: user.email, nombre: user.nombre },
+    user: {
+      id: user.id,
+      email: user.email,
+      nombre: user.nombre,
+      hasPassword: user.has_password,
+      avatarUrl: urlImagen('avatares', user.id, user.avatar_actualizado_at),
+      bannerUrl: urlImagen('banners', user.id, user.banner_actualizado_at),
+      rolCanal: user.rol_canal,
+    },
     plan,
     entitlements: eRows.map((r) => r.feature_id),
     subscription: sub
