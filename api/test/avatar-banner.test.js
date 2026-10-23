@@ -38,6 +38,10 @@ stub('../src/queries/tocar-imagen-perfil', {
   tocarAvatar: async (userId) => { llamadas.push(`tocar-avatar:${userId}`); },
   tocarBanner: async (userId) => { llamadas.push(`tocar-banner:${userId}`); },
 });
+const SESION_FALSA = { user: { id: 'user-1', email: 'user-1@test.com', avatarUrl: 'https://cloudinary/avatares/user-1' }, plan: 'free', entitlements: [], subscription: null };
+stub('../src/queries/estado-cuenta', {
+  estadoCuenta: async (userId) => { llamadas.push(`estado-cuenta:${userId}`); return SESION_FALSA; },
+});
 
 const express = require('express');
 const router = require('../src/routes/avatar-banner');
@@ -81,14 +85,14 @@ test('avatar/firma: Cloudinary no configurado -> 501', async () => {
   assert.strictEqual(res.json.errorKey, 'errors.notImplemented');
 });
 
-test('avatar/confirmar: toca la fecha del usuario logueado', async () => {
+test('avatar/confirmar: toca la fecha y devuelve la sesion re-hidratada', async () => {
   const res = await post('/api/account/avatar/confirmar');
-  assert.deepStrictEqual(res.json, { ok: true });
-  assert.deepStrictEqual(llamadas, ['tocar-avatar:user-1']);
+  assert.deepStrictEqual(res.json, SESION_FALSA);
+  assert.deepStrictEqual(llamadas, ['tocar-avatar:user-1', 'estado-cuenta:user-1']);
 });
 
-test('banner/confirmar: toca la fecha del usuario logueado', async () => {
+test('banner/confirmar: toca la fecha y devuelve la sesion re-hidratada', async () => {
   const res = await post('/api/account/banner/confirmar');
-  assert.deepStrictEqual(res.json, { ok: true });
-  assert.deepStrictEqual(llamadas, ['tocar-banner:user-1']);
+  assert.deepStrictEqual(res.json, SESION_FALSA);
+  assert.deepStrictEqual(llamadas, ['tocar-banner:user-1', 'estado-cuenta:user-1']);
 });
