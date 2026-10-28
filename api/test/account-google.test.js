@@ -19,6 +19,7 @@ let identidadesListadas;
 let perfilGoogle;
 let fallaIntercambio;
 let fallaVincular;
+let tienePasswordValor;
 
 function stub(mod, exp) {
   const p = require.resolve(mod);
@@ -48,6 +49,10 @@ stub('../src/queries/vincular-identidad', {
   },
 });
 stub('../src/queries/listar-identidades', { listarIdentidades: async () => identidadesListadas });
+stub('../src/queries/tiene-password', { tienePassword: async () => tienePasswordValor });
+stub('../src/queries/desvincular-identidad', {
+  desvincularIdentidad: async (userId, provider) => { llamadas.push(`desvincular:${userId}:${provider}`); return true; },
+});
 
 const express = require('express');
 const router = require('../src/routes/account');
@@ -60,6 +65,7 @@ beforeEach(() => {
   perfilGoogle = { sub: 'g-1', email: 'fran@gmail.com', emailVerified: true, name: 'Fran' };
   fallaIntercambio = null;
   fallaVincular = null;
+  tienePasswordValor = true;
 });
 
 async function pedir(method, path, body) {
@@ -81,6 +87,7 @@ async function pedir(method, path, body) {
 
 const GOOGLE_BODY = { code: 'c', codeVerifier: 'v', redirectUri: 'http://127.0.0.1:5000' };
 const linkGoogle = (body) => pedir('POST', '/api/account/link/google', body);
+const unlinkGoogle = () => pedir('DELETE', '/api/account/link/google');
 const identidades = () => pedir('GET', '/api/account/identities');
 const eliminar = (body) => pedir('DELETE', '/api/account', body);
 
@@ -130,6 +137,33 @@ test('link/google: Google no configurado -> 501', async () => {
 test('link/google: faltan campos en el body -> 400', async () => {
   const res = await linkGoogle({ code: 'c' });
   assert.strictEqual(res.status, 400);
+  assert.deepStrictEqual(llamadas, []);
+});
+
+// ---- DELETE /api/account/link/google ----
+
+test('unlink/google: con password -> desvincula', async () => {
+  tienePasswordValor = true;
+  identidadesListadas = [{ provider: 'google', email: 'fran@gmail.com' }];
+  const res = await unlinkGoogle();
+  assert.deepStrictEqual(res.json, { ok: true });
+  assert.deepStrictEqual(llamadas, ['desvincular:user-1:google']);
+});
+
+test('unlink/google: sin password pero con otra identidad -> desvincula', async () => {
+  tienePasswordValor = false;
+  identidadesListadas = [{ provider: 'google', email: 'fran@gmail.com' }, { provider: 'twitch' }];
+  const res = await unlinkGoogle();
+  assert.deepStrictEqual(res.json, { ok: true });
+  assert.deepStrictEqual(llamadas, ['desvincular:user-1:google']);
+});
+
+test('unlink/google: sin password y sin otra identidad -> 409, no desvincula', async () => {
+  tienePasswordValor = false;
+  identidadesListadas = [{ provider: 'google', email: 'fran@gmail.com' }];
+  const res = await unlinkGoogle();
+  assert.strictEqual(res.status, 409);
+  assert.strictEqual(res.json.errorKey, 'errors.googleUnlinkSinPassword');
   assert.deepStrictEqual(llamadas, []);
 });
 

@@ -12,6 +12,8 @@ const { intercambiarCodeGoogle } = require('../auth/google');
 const { buscarIdentidadUsuario } = require('../queries/buscar-identidad-usuario');
 const { vincularIdentidad } = require('../queries/vincular-identidad');
 const { listarIdentidades } = require('../queries/listar-identidades');
+const { desvincularIdentidad } = require('../queries/desvincular-identidad');
+const { tienePassword } = require('../queries/tiene-password');
 
 const router = express.Router();
 
@@ -88,6 +90,22 @@ router.post(
     res.json({ ok: true });
   })
 );
+
+// Desvincula Google del login (no toca plataformas_vinculadas, eso es
+// /account/link/:plataforma en plataformas.js). Bloqueado si seria la unica
+// forma de login que le queda al usuario (sin password y sin otra identidad).
+router.delete('/account/link/google', requireAuth, limitLinkGoogle, wrap(async (req, res) => {
+  const [conPassword, identidades] = await Promise.all([
+    tienePassword(req.userId),
+    listarIdentidades(req.userId),
+  ]);
+  const otrasIdentidades = identidades.some((i) => i.provider !== 'google');
+  if (!conPassword && !otrasIdentidades) {
+    return fail(res, 409, 'errors.googleUnlinkSinPassword', 'Desvincula eso te dejaria sin forma de iniciar sesion');
+  }
+  await desvincularIdentidad(req.userId, 'google');
+  res.json({ ok: true });
+}));
 
 // Adivinar la contrasena de una sesion robada: 5 intentos / 15 min por usuario.
 const limitEliminar = makeRateLimit({
