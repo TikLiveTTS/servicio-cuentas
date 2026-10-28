@@ -6,6 +6,7 @@ const { makeRateLimit } = require('../middleware/rate-limit');
 const { fail, wrap } = require('../lib/errores');
 const { firmarSubida } = require('../cloudinary/firmar-subida');
 const { tocarAvatar, tocarBanner } = require('../queries/tocar-imagen-perfil');
+const { estadoCuenta } = require('../queries/estado-cuenta');
 
 const router = express.Router();
 const limit = makeRateLimit({ max: 20, windowMs: 15 * 60 * 1000, keyFn: (req) => req.userId });
@@ -38,14 +39,17 @@ router.post('/account/banner/firma', requireAuth, limit, wrap(async (req, res) =
 
 // La app llama esto despues de que Cloudinary confirmo la subida (no se
 // confia en ninguna URL que mande el cliente: solo se marca la fecha).
+// Devuelve la sesion completa (mismo shape que /api/session) para que el
+// cliente la pase directo a aplicarSesion() y la URL nueva se vea sin
+// recargar -- un {ok:true} pelado no le daba al cliente nada con que pintar.
 router.post('/account/avatar/confirmar', requireAuth, limit, wrap(async (req, res) => {
   await tocarAvatar(req.userId);
-  res.json({ ok: true });
+  res.json(await estadoCuenta(req.userId));
 }));
 
 router.post('/account/banner/confirmar', requireAuth, limit, wrap(async (req, res) => {
   await tocarBanner(req.userId);
-  res.json({ ok: true });
+  res.json(await estadoCuenta(req.userId));
 }));
 
 module.exports = router;

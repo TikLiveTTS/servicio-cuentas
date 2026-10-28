@@ -8,6 +8,7 @@
 // por aca, agregar el campo al body de abajo.
 const EVENTOS = [
   { name: 'chat.message.sent', version: 1 },
+  { name: 'channel.followed', version: 1 },
   { name: 'channel.subscription.new', version: 1 },
   { name: 'channel.subscription.renewal', version: 1 },
   { name: 'channel.subscription.gifts', version: 1 },
