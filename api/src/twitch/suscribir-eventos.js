@@ -13,6 +13,13 @@ const EVENTOS = [
   { type: 'channel.chat.message', version: '1', condicionExtra: (broadcasterId) => ({ user_id: broadcasterId }) },
   { type: 'channel.subscribe', version: '1', condicionExtra: () => ({}) },
   { type: 'channel.cheer', version: '1', condicionExtra: () => ({}) },
+  // v2 (no v1, deprecada por Twitch) exige moderator_user_id ademas del
+  // broadcaster -- el broadcaster siempre es moderador de su propio canal,
+  // asi que sirve el mismo id. Requiere el scope moderator:read:followers
+  // (ver electron-shell/twitch-auth.js en tiktok-tts); cuentas vinculadas
+  // antes de ese scope van a fallar esta suscripcion puntual (mejor
+  // esfuerzo, no bloquea el resto) hasta que vuelvan a vincular.
+  { type: 'channel.follow', version: '2', condicionExtra: (broadcasterId) => ({ moderator_user_id: broadcasterId }) },
 ];
 
 // Mejor esfuerzo: si una suscripcion falla, se loguea y se sigue con las
