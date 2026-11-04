@@ -16,6 +16,9 @@ services:
       POLAR_WEBHOOK_SECRET: ${POLAR_WEBHOOK_SECRET:-}
       POLAR_PRODUCT_ID_PRO_ANUAL: ${POLAR_PRODUCT_ID_PRO_ANUAL:-}
       POLAR_PRODUCT_ID_SIN_PROMOS: ${POLAR_PRODUCT_ID_SIN_PROMOS:-}
+      # Resend (recuperar contraseña): opcional para arrancar, igual que Polar.
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
       # Opcionales.
       PORT: 4000
       SESSION_HOURS: ${SESSION_HOURS:-720}
