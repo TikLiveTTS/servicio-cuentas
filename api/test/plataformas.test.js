@@ -99,7 +99,7 @@ const linkKick = (body) => pedir('POST', '/api/account/link/kick', body);
 const platforms = () => pedir('GET', '/api/account/platforms');
 const unlink = (plataforma) => pedir('DELETE', `/api/account/link/${plataforma}`);
 
-const TWITCH_BODY = { code: 'c', redirectUri: 'http://localhost:17623' };
+const TWITCH_BODY = { code: 'c', codeVerifier: 'v', redirectUri: 'http://localhost:17623' };
 const KICK_BODY = { code: 'c', codeVerifier: 'v', redirectUri: 'http://localhost:17624' };
 
 test('link/twitch: vincula una cuenta nueva', async () => {
@@ -123,11 +123,29 @@ test('link/twitch: el usuario ya tiene OTRA cuenta de Twitch vinculada -> 409', 
   assert.deepStrictEqual(llamadas, []);
 });
 
-test('link/twitch: esa cuenta ya esta vinculada a otro usuario (carrera) -> 409', async () => {
-  fallaGuardar = Object.assign(new Error('dup'), { code: 'plataforma_tomada' });
+test('link/twitch: el mismo usuario vincula dos veces a la vez (carrera) -> 409', async () => {
+  fallaGuardar = Object.assign(new Error('dup'), { code: 'ya_vinculado' });
   const res = await linkTwitch(TWITCH_BODY);
   assert.strictEqual(res.status, 409);
   assert.strictEqual(res.json.errorKey, 'errors.plataformaTomada');
+});
+
+// Migracion 014: el canal ya vinculado a OTRA cuenta nuestra no bloquea. Desde
+// la ruta eso es: buscarPlataformaUsuario (solo mira a ESTE usuario) da null y
+// guardarPlataforma no tira, aunque otro user_id tenga el mismo plataforma_user_id.
+test('link/twitch: el canal ya esta vinculado a OTRA cuenta nuestra -> vincula igual', async () => {
+  plataformaPropia = null;
+  const res = await linkTwitch(TWITCH_BODY);
+  assert.strictEqual(res.status, 200);
+  assert.deepStrictEqual(res.json, { ok: true });
+  assert.deepStrictEqual(llamadas, ['guardar:twitch:user-1:tw-1']);
+});
+
+test('link/kick: el canal ya esta vinculado a OTRA cuenta nuestra -> vincula igual', async () => {
+  plataformaPropia = null;
+  const res = await linkKick(KICK_BODY);
+  assert.strictEqual(res.status, 200);
+  assert.deepStrictEqual(llamadas, ['guardar:kick:user-1:kk-1']);
 });
 
 test('link/twitch: Twitch no configurado -> 501', async () => {

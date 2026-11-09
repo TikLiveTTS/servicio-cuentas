@@ -4,10 +4,10 @@ const { query } = require('../db');
 
 // Guarda la plataforma vinculada de un usuario (los tokens ya vienen
 // cifrados, ver lib/cifrado.js — esta funcion no cifra nada, solo persiste).
-// Lanza con code 'plataforma_tomada' si esa cuenta externa ya esta vinculada
-// a OTRO usuario, o 'ya_vinculado' si el mismo usuario ya tiene esa
-// plataforma vinculada (coincida o no la cuenta -- eso lo distingue el
-// llamador antes de insertar).
+// Una misma cuenta externa (canal) puede estar vinculada a varios usuarios
+// nuestros (migracion 014). Lanza con code 'ya_vinculado' si ESTE usuario ya
+// tiene esa plataforma vinculada (coincida o no la cuenta -- eso lo distingue
+// el llamador antes de insertar; aca solo aparece por una carrera).
 async function guardarPlataforma({
   userId,
   plataforma,
@@ -30,11 +30,6 @@ async function guardarPlataforma({
     );
     return rows[0];
   } catch (err) {
-    if (err.code === '23505' && err.constraint === 'plataformas_vinculadas_plataforma_plataforma_user_id_key') {
-      const e = new Error('esa cuenta ya esta vinculada a otro usuario');
-      e.code = 'plataforma_tomada';
-      throw e;
-    }
     if (err.code === '23505' && err.constraint === 'plataformas_vinculadas_user_id_plataforma_key') {
       const e = new Error('el usuario ya tiene esa plataforma vinculada');
       e.code = 'ya_vinculado';

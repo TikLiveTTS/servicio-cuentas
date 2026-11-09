@@ -22,6 +22,8 @@ const PLATAFORMAS_VALIDAS = ['twitch', 'kick'];
 // Comun a Twitch y Kick una vez que ya se obtuvo el perfil verificado: no
 // vincula si el usuario ya tiene OTRA cuenta de esa plataforma (sin
 // desvincular antes), y es no-op si ya es exactamente esa misma cuenta.
+// Que el canal ya este vinculado a OTRO usuario nuestro NO bloquea: varias
+// cuentas pueden compartir el mismo canal (migracion 014).
 // `suscribirEventos` corre DESPUES de responder, mejor esfuerzo -- si falla
 // no afecta el vinculo (que ya quedo guardado).
 async function vincular(req, res, plataforma, perfil, suscribirEventos) {
@@ -48,8 +50,10 @@ async function vincular(req, res, plataforma, perfil, suscribirEventos) {
       scopes: perfil.scopes,
     });
   } catch (err) {
-    if (err.code === 'plataforma_tomada' || err.code === 'ya_vinculado') {
-      return fail(res, 409, 'errors.plataformaTomada', `Esa cuenta de ${plataforma} ya esta vinculada a otro usuario`);
+    if (err.code === 'ya_vinculado') {
+      // Carrera: dos pedidos del MISMO usuario a la vez. (Que otra cuenta
+      // nuestra ya tenga este canal ya no es error: migracion 014.)
+      return fail(res, 409, 'errors.plataformaTomada', `Ya tenes otra cuenta de ${plataforma} vinculada; desvincula esa primero`);
     }
     throw err;
   }

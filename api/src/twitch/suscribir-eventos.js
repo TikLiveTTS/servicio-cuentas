@@ -49,6 +49,12 @@ async function suscribirEventosTwitch(broadcasterId) {
       }),
       signal: AbortSignal.timeout(8000),
     });
+    // 409 = esa suscripcion ya existe (otra cuenta nuestra ya vinculo este
+    // mismo canal): los eventos ya llegan, se cuenta como exito.
+    if (res.status === 409) {
+      exitosos.push(evento.type);
+      continue;
+    }
     if (!res.ok) {
       console.error(`[twitch] no se pudo suscribir a ${evento.type} (broadcaster ${broadcasterId}): ${res.status} ${await res.text()}`);
       continue;

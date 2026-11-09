@@ -11,7 +11,7 @@ process.env.SESSION_SECRET = process.env.SESSION_SECRET || 'x'.repeat(32);
 
 const llamadas = [];
 let firmaValida;
-let usuarioDelCanal;
+let usuariosDelCanal;
 
 function stub(mod, exp) {
   const p = require.resolve(mod);
@@ -19,8 +19,8 @@ function stub(mod, exp) {
 }
 
 stub('../src/kick/verificar-firma', { verificarFirmaKick: async () => firmaValida });
-stub('../src/queries/buscar-usuario-por-plataforma', {
-  buscarUsuarioPorPlataforma: async () => usuarioDelCanal,
+stub('../src/queries/buscar-usuarios-por-plataforma', {
+  buscarUsuariosPorPlataforma: async () => usuariosDelCanal,
 });
 stub('../src/realtime/servidor', {
   enviarEventoAUsuario: (userId, evento) => { llamadas.push(`enviar:${userId}:${evento.tipo}`); },
@@ -32,7 +32,7 @@ const router = require('../src/routes/webhook-kick');
 beforeEach(() => {
   llamadas.length = 0;
   firmaValida = true;
-  usuarioDelCanal = 'user-1';
+  usuariosDelCanal = ['user-1'];
 });
 
 async function post(body, headers) {
@@ -65,8 +65,16 @@ test('evento con canal vinculado: reenvia por el canal en tiempo real', async ()
 });
 
 test('evento de un canal que no esta vinculado a nadie: 204, no reenvia', async () => {
-  usuarioDelCanal = null;
+  usuariosDelCanal = [];
   const res = await post({ broadcaster: { user_id: 999 } }, { 'Kick-Event-Type': 'kicks.gifted' });
   assert.strictEqual(res.status, 204);
   assert.deepStrictEqual(llamadas, []);
+});
+
+// Migracion 014: el mismo canal puede estar vinculado a varias cuentas nuestras.
+test('canal vinculado a dos cuentas: el evento llega a las dos', async () => {
+  usuariosDelCanal = ['user-1', 'user-2'];
+  const res = await post({ broadcaster: { user_id: 123 } }, { 'Kick-Event-Type': 'chat.message.sent' });
+  assert.strictEqual(res.status, 204);
+  assert.deepStrictEqual(llamadas, ['enviar:user-1:chat.message.sent', 'enviar:user-2:chat.message.sent']);
 });

@@ -2,7 +2,7 @@
 
 const express = require('express');
 const { verificarFirmaTwitch } = require('../twitch/verificar-firma');
-const { buscarUsuarioPorPlataforma } = require('../queries/buscar-usuario-por-plataforma');
+const { buscarUsuariosPorPlataforma } = require('../queries/buscar-usuarios-por-plataforma');
 const { enviarEventoAUsuario } = require('../realtime/servidor');
 
 const router = express.Router();
@@ -44,8 +44,10 @@ router.post('/webhooks/twitch', express.raw({ type: '*/*', limit: '256kb' }), as
 
   const broadcasterId = body.event && (body.event.broadcaster_user_id || body.event.to_broadcaster_user_id);
   if (broadcasterId) {
-    const userId = await buscarUsuarioPorPlataforma('twitch', String(broadcasterId));
-    if (userId) {
+    // Un canal puede estar vinculado a varias cuentas nuestras: el evento
+    // llega a todas.
+    const userIds = await buscarUsuariosPorPlataforma('twitch', String(broadcasterId));
+    for (const userId of userIds) {
       enviarEventoAUsuario(userId, {
         plataforma: 'twitch',
         tipo: body.subscription && body.subscription.type,

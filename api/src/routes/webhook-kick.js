@@ -2,7 +2,7 @@
 
 const express = require('express');
 const { verificarFirmaKick } = require('../kick/verificar-firma');
-const { buscarUsuarioPorPlataforma } = require('../queries/buscar-usuario-por-plataforma');
+const { buscarUsuariosPorPlataforma } = require('../queries/buscar-usuarios-por-plataforma');
 const { enviarEventoAUsuario } = require('../realtime/servidor');
 
 const router = express.Router();
@@ -30,8 +30,10 @@ router.post('/webhooks/kick', express.raw({ type: '*/*', limit: '256kb' }), asyn
   // primer webhook real.
   const broadcasterId = body.broadcaster && body.broadcaster.user_id;
   if (broadcasterId) {
-    const userId = await buscarUsuarioPorPlataforma('kick', String(broadcasterId));
-    if (userId) {
+    // Un canal puede estar vinculado a varias cuentas nuestras: el evento
+    // llega a todas.
+    const userIds = await buscarUsuariosPorPlataforma('kick', String(broadcasterId));
+    for (const userId of userIds) {
       enviarEventoAUsuario(userId, { plataforma: 'kick', tipo: tipoEvento, datos: body });
     }
   }
