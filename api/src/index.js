@@ -28,6 +28,7 @@ const chatRoutes = require('./routes/chat');
 const webhookRoutes = require('./routes/webhook-polar');
 const webhookTwitchRoutes = require('./routes/webhook-twitch');
 const webhookKickRoutes = require('./routes/webhook-kick');
+const twitchEnVivoRoutes = require('./routes/twitch-en-vivo');
 
 const app = express();
 app.set('trust proxy', config.trustProxy);
@@ -72,6 +73,7 @@ app.use('/api', checkoutRoutes);
 app.use('/api', subscriptionRoutes);
 app.use('/api', cambiarIntervaloRoutes);
 app.use('/api', chatRoutes);
+app.use('/api', twitchEnVivoRoutes);
 
 // 404 JSON.
 app.use((req, res) => res.status(404).json({ error: 'No encontrado', errorKey: 'errors.notFound' }));
