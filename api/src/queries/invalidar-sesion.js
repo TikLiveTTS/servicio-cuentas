@@ -11,4 +11,11 @@ async function invalidarSesionesDeUsuario(userId) {
   await query(`DELETE FROM sessions WHERE user_id = $1`, [userId]);
 }
 
-module.exports = { invalidarSesion, invalidarSesionesDeUsuario };
+// Cierra todas las sesiones de un usuario MENOS la actual (cambio de contraseña
+// estando logueado: quien la cambia sigue dentro, cualquier otro dispositivo o
+// sesion robada queda fuera).
+async function invalidarOtrasSesiones(userId, tokenActual) {
+  await query(`DELETE FROM sessions WHERE user_id = $1 AND token <> $2`, [userId, tokenActual]);
+}
+
+module.exports = { invalidarSesion, invalidarSesionesDeUsuario, invalidarOtrasSesiones };
